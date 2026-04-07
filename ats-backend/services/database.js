@@ -26,12 +26,26 @@ async function initDb() {
 
     if (isPostgres) {
         // Log để debug (đã che mật khẩu)
-        console.log('📡 Đang kết nối Database:', connectionUri.replace(/:[^:@/]+@/, ':****@'));
+        console.log('📡 Đang kết nối Database (Manual Mode):', connectionUri.replace(/:[^:@/]+@/, ':****@'));
 
-        pgPool = new Pool({
-            connectionString: connectionUri,
-            ssl: { rejectUnauthorized: false } // Bắt buộc cho Render Postgres
-        });
+        try {
+            const dbUrl = new URL(connectionUri);
+            pgPool = new Pool({
+                user: dbUrl.username,
+                password: decodeURIComponent(dbUrl.password),
+                host: dbUrl.hostname,
+                port: dbUrl.port || 5432,
+                database: dbUrl.pathname.slice(1) || 'postgres',
+                ssl: { rejectUnauthorized: false }
+            });
+        } catch (e) {
+            console.error('❌ Lỗi phân tích DATABASE_URL:', e.message);
+            // Fallback nếu URL lạ
+            pgPool = new Pool({
+                connectionString: connectionUri,
+                ssl: { rejectUnauthorized: false }
+            });
+        }
         
         await pgPool.query(`
             CREATE TABLE IF NOT EXISTS candidates (
