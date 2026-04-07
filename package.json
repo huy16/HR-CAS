@@ -1,0 +1,11 @@
+{
+  "name": "hr-cas",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "npm install --prefix ats-backend && npm install --prefix ats-web && npm run build --prefix ats-web",
+    "start": "npm start --prefix ats-backend"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

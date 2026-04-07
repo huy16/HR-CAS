@@ -324,6 +324,21 @@ if (process.env.AUTO_SCAN === 'true') {
 }
 
 // ============================================================
+// Serve Frontend (Production - khi deploy lên Render)
+// ============================================================
+const frontendBuild = path.join(__dirname, '..', 'ats-web', 'dist');
+if (fs.existsSync(frontendBuild)) {
+    app.use(express.static(frontendBuild));
+    // SPA fallback - tất cả route không phải API → trả về index.html
+    app.get('*', (req, res) => {
+        if (!req.path.startsWith('/api') && !req.path.startsWith('/auth') && !req.path.startsWith('/attachments')) {
+            res.sendFile(path.join(frontendBuild, 'index.html'));
+        }
+    });
+    console.log('🌐 Frontend: Serving từ ats-web/dist/');
+}
+
+// ============================================================
 // Start Server
 // ============================================================
 const PORT = process.env.PORT || 3001;
@@ -347,3 +362,4 @@ app.listen(PORT, () => {
 // Đóng DB an toàn khi tắt server
 process.on('SIGINT', () => { db.closeDb(); process.exit(0); });
 process.on('SIGTERM', () => { db.closeDb(); process.exit(0); });
+
