@@ -14,10 +14,24 @@ function App() {
   const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState(null);
 
-  // Kiểm tra trạng thái Outlook khi load
+  // Load dữ liệu từ SQLite khi mở trang
   useEffect(() => {
     checkOutlookStatus();
+    loadCandidatesFromDB();
   }, []);
+
+  const loadCandidatesFromDB = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/candidates`);
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        setCandidates(data);
+        console.log(`💾 Đã load ${data.length} ứng viên từ database.`);
+      }
+    } catch (e) {
+      console.log('Backend chưa chạy, dùng dữ liệu mẫu.');
+    }
+  };
 
   const checkOutlookStatus = async () => {
     try {
@@ -106,10 +120,21 @@ function App() {
         });
 
         if (newCandidates.length > 0) {
+          // Lưu vào SQLite qua backend
+          fetch(`${API_URL}/api/candidates/import`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ candidates: newCandidates })
+          }).then(r => r.json()).then(result => {
+            console.log('💾 Đã lưu vào database:', result);
+          }).catch(e => console.warn('Backend chưa chạy, chỉ lưu tạm:', e));
+
           setCandidates(prev => [...newCandidates, ...prev]);
-          alert(`Đã import thành công ${newCandidates.length} ứng viên!`);
+          setScanResult({ type: 'success', message: `Đã import ${newCandidates.length} ứng viên từ Excel!` });
+          setTimeout(() => setScanResult(null), 5000);
         } else {
-          alert('Không tìm thấy dữ liệu hợp lệ trong file!');
+          setScanResult({ type: 'warning', message: 'Không tìm thấy dữ liệu hợp lệ trong file!' });
+          setTimeout(() => setScanResult(null), 5000);
         }
       } catch (err) {
         console.error(err);
