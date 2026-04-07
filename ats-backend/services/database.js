@@ -8,13 +8,17 @@ const { Pool } = require('pg');
 const Database = require('better-sqlite3');
 const path = require('path');
 
+// Điền chuỗi kết nối Supabase của bạn vào dấu nháy đơn dưới đây (nhớ thay đổi [YOUR-PASSWORD] thành mật khẩu thực tế)
+const SUPABASE_URL = 'postgresql://postgres:[YOUR-PASSWORD]@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres';
+
 let isPostgres = false;
 
 let pgPool;
 let sqliteDb;
 
 async function initDb() {
-    isPostgres = !!process.env.DATABASE_URL;
+    const connectionUri = SUPABASE_URL !== '' && !SUPABASE_URL.includes('[YOUR-PASSWORD]') ? SUPABASE_URL : process.env.DATABASE_URL;
+    isPostgres = !!connectionUri;
     
     // Đóng db cũ nếu đang bật
     if (pgPool) { pgPool.end(); pgPool = null; }
@@ -22,7 +26,7 @@ async function initDb() {
 
     if (isPostgres) {
         pgPool = new Pool({
-            connectionString: process.env.DATABASE_URL,
+            connectionString: connectionUri,
             ssl: { rejectUnauthorized: false } // Bắt buộc cho Render Postgres
         });
         
