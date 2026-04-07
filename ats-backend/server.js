@@ -29,20 +29,25 @@ app.use('/auth', authRouter);
 // ============================================================
 // API: Lấy danh sách ứng viên
 // ============================================================
-app.get('/api/candidates', (req, res) => {
-    res.json(db.getAllCandidates());
+app.get('/api/candidates', async (req, res) => {
+    try {
+        const candidates = await db.getAllCandidates();
+        res.json(candidates);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
 });
 
 // ============================================================
 // API: Import ứng viên từ Frontend (Excel/Manual)
 // ============================================================
-app.post('/api/candidates/import', (req, res) => {
+app.post('/api/candidates/import', async (req, res) => {
     try {
         const candidates = req.body.candidates || [];
         if (!Array.isArray(candidates) || candidates.length === 0) {
             return res.status(400).json({ error: 'Không có dữ liệu để import' });
         }
-        const added = db.insertManyCandidates(candidates);
+        const added = await db.insertManyCandidates(candidates);
         console.log(`📥 Import: Đã thêm ${added}/${candidates.length} ứng viên vào database.`);
         res.json({ message: `Đã import ${added} ứng viên`, added, total: candidates.length });
     } catch (e) {
@@ -81,14 +86,18 @@ app.post('/api/scan/outlook', async (req, res) => {
 
         const newCandidates = await scanOutlookEmails(accessToken, options);
 
-        // Loại trùng dựa trên outlookMsgId trong SQLite
-        const uniqueCandidates = newCandidates.filter(c => !db.candidateExistsByOutlookMsgId(c.outlookMsgId));
+        // Loại trùng dựa trên outlookMsgId
+        const uniqueCandidates = [];
+        for (const c of newCandidates) {
+            const exists = await db.candidateExistsByOutlookMsgId(c.outlookMsgId);
+            if (!exists) uniqueCandidates.push(c);
+        }
 
-        // Lưu vào SQLite
-        const added = db.insertManyCandidates(uniqueCandidates);
+        // Lưu vào SQLite/Postgres
+        const added = await db.insertManyCandidates(uniqueCandidates);
 
         // Ghi lịch sử
-        db.addScanHistory({
+        await db.addScanHistory({
             time: new Date().toLocaleString('vi-VN'),
             source: 'Outlook',
             found: newCandidates.length,
@@ -182,8 +191,8 @@ app.post('/api/scan/imap', async (req, res) => {
         }
 
         // Lưu vào SQLite
-        const added = db.insertManyCandidates(newCandidates);
-        db.addScanHistory({ time: new Date().toLocaleString('vi-VN'), source: 'IMAP', found: newCandidates.length, added, duplicates: 0 });
+        const added = await db.insertManyCandidates(newCandidates);
+        await db.addScanHistory({ time: new Date().toLocaleString('vi-VN'), source: 'IMAP', found: newCandidates.length, added, duplicates: 0 });
 
         connection.end();
         console.log(`🎯 Đã quét thêm ${added} CV mới (IMAP)!`);
@@ -205,45 +214,52 @@ app.post('/api/scan', async (req, res) => {
     if (accessToken) {
         try {
             const candidates = await scanOutlookEmails(accessToken, { daysBack: 7 });
-            const unique = candidates.filter(c => !db.candidateExistsByOutlookMsgId(c.outlookMsgId));
-            const added = db.insertManyCandidates(unique);
+            const unique = [];
+            for (const c of candidates) {
+                const exists = await db.candidateExistsByOutlookMsgId(c.outlookMsgId);
+                if (!exists) unique.push(c);
+            }
+            const added = await db.insertManyCandidates(unique);
             results.outlook = { found: candidates.length, added };
             results.totalAdded += added;
 
-            db.addScanHistory({ time: new Date().toLocaleString('vi-VN'), source: 'Outlook', found: candidates.length, added, duplicates: candidates.length - added });
+            await db.addScanHistory({ time: new Date().toLocaleString('vi-VN'), source: 'Outlook', found: candidates.length, added, duplicates: candidates.length - added });
         } catch (e) {
             results.outlook = { error: e.message };
         }
     }
 
+    const allCandidates = await db.getAllCandidates();
+
     res.json({
         message: `Quét hoàn tất! Thêm ${results.totalAdded} CV mới.`,
         count: results.totalAdded,
         details: results,
-        data: db.getAllCandidates().slice(0, results.totalAdded)
+        data: allCandidates.slice(0, results.totalAdded)
     });
 });
 
 // ============================================================
 // API: Lịch sử quét
 // ============================================================
-app.get('/api/scan/history', (req, res) => {
-    res.json(db.getScanHistory());
+app.get('/api/scan/history', async (req, res) => {
+    const history = await db.getScanHistory();
+    res.json(history);
 });
 
 // ============================================================
 // API: Xóa ứng viên
 // ============================================================
-app.delete('/api/candidates/:id', (req, res) => {
-    const deleted = db.deleteCandidate(req.params.id);
+app.delete('/api/candidates/:id', async (req, res) => {
+    const deleted = await db.deleteCandidate(req.params.id);
     res.json({ deleted });
 });
 
 // ============================================================
 // API: Cập nhật ứng viên
 // ============================================================
-app.patch('/api/candidates/:id', (req, res) => {
-    const candidate = db.updateCandidate(req.params.id, req.body);
+app.patch('/api/candidates/:id', async (req, res) => {
+    const candidate = await db.updateCandidate(req.params.id, req.body);
     if (!candidate) return res.status(404).json({ error: 'Không tìm thấy ứng viên' });
     res.json(candidate);
 });
@@ -306,9 +322,12 @@ if (process.env.AUTO_SCAN === 'true') {
         if (accessToken) {
             try {
                 const candidates = await scanOutlookEmails(accessToken, { daysBack: 1, onlyUnread: true });
-                const unique = candidates.filter(c => !db.candidateExistsByOutlookMsgId(c.outlookMsgId));
+                const unique = [];
+                for (const c of candidates) {
+                    if (!(await db.candidateExistsByOutlookMsgId(c.outlookMsgId))) unique.push(c);
+                }
                 if (unique.length > 0) {
-                    const added = db.insertManyCandidates(unique);
+                    const added = await db.insertManyCandidates(unique);
                     console.log(`  ✅ Auto-scan: Thêm ${added} CV mới!`);
                 } else {
                     console.log('  📭 Auto-scan: Không có CV mới.');
@@ -342,24 +361,32 @@ if (fs.existsSync(frontendBuild)) {
 // Start Server
 // ============================================================
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-    console.log('');
-    console.log('═══════════════════════════════════════════════════');
-    console.log(`🚀 ATS Backend Server đang chạy tại http://localhost:${PORT}`);
-    console.log('💾 Database: SQLite (ats-database.db)');
-    console.log('═══════════════════════════════════════════════════');
-    console.log('');
 
-    if (!isConfigured()) {
-        console.log('⚠️  CHƯA CẤU HÌNH OUTLOOK:');
-        console.log('   Vào Settings trên web → Kết nối Outlook → Điền Azure credentials');
-    } else {
-        console.log('✅ Azure đã cấu hình. Bấm "Kết nối Outlook" trên web để đăng nhập.');
-    }
-    console.log('');
-});
+async function start() {
+    await db.initDb();
+    
+    app.listen(PORT, () => {
+        console.log('');
+        console.log('═══════════════════════════════════════════════════');
+        console.log(`🚀 ATS Backend Server đang chạy tại http://localhost:${PORT}`);
+        console.log(`💾 Database: ${db.isPostgres ? 'PostgreSQL (Render)' : 'SQLite (Local)'}`);
+        console.log('═══════════════════════════════════════════════════');
+        console.log('');
+
+        if (!isConfigured()) {
+            console.log('⚠️  CHƯA CẤU HÌNH OUTLOOK:');
+            console.log('   Vào Settings trên web → Kết nối Outlook → Điền Azure credentials');
+        } else {
+            console.log('✅ Azure đã cấu hình. Bấm "Kết nối Outlook" trên web để đăng nhập.');
+        }
+        console.log('');
+    });
+}
+
+start();
 
 // Đóng DB an toàn khi tắt server
 process.on('SIGINT', () => { db.closeDb(); process.exit(0); });
 process.on('SIGTERM', () => { db.closeDb(); process.exit(0); });
+
 
