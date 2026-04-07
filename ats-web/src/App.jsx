@@ -1,11 +1,74 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { Briefcase, LayoutDashboard, Settings, UserPlus, Users, Search, Bell, Upload, RefreshCw, Mic, ClipboardCheck, Mail, LogIn, CheckCircle, Loader, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Briefcase, LayoutDashboard, Settings, UserPlus, Users, Search, Bell, Upload, RefreshCw, Mic, ClipboardCheck, Mail, LogIn, CheckCircle, Loader, ChevronLeft, ChevronRight, Database } from 'lucide-react';
 import * as XLSX from 'xlsx';
-import { mockCandidates, columns, masterData } from './data';
+import { mockCandidates, columns, masterData as defaultMasterData } from './data';
 import './App.css';
 
 const API_URL = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:3001' : '');
+
+const ComboInput = ({ value, onChange, options, placeholder, style = {}, className = '' }) => {
+  const [showOptions, setShowOptions] = useState(false);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) setShowOptions(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div ref={containerRef} style={{ position: 'relative', width: '100%', ...style }}>
+      <input
+        className={`input-inline ${className}`}
+        style={{ paddingRight: '22px', width: '100%', cursor: showOptions ? 'text' : 'pointer' }}
+        value={value}
+        onChange={(e) => { onChange(e.target.value); setShowOptions(true); }}
+        onFocus={() => setShowOptions(true)}
+        onClick={() => setShowOptions(true)}
+        placeholder={placeholder}
+      />
+      <div 
+        style={{ position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)', cursor: 'pointer', opacity: 0.5, pointerEvents: 'none' }}
+      >▼</div>
+      {showOptions && (
+        <div style={{
+          position: 'absolute', top: '100%', left: 0, minWidth: '120px', zIndex: 9999,
+          background: 'var(--bg-surface-elevated)', border: '1px solid var(--border-color)',
+          borderRadius: '6px', maxHeight: '200px', overflowY: 'auto',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.5)', marginTop: '4px', padding: '4px'
+        }}>
+          {options.map((opt, i) => (
+            <div key={i} onClick={() => { onChange(opt); setShowOptions(false); }}
+                 style={{
+                   padding: '8px 12px', cursor: 'pointer', borderRadius: '4px',
+                   color: '#fff', fontSize: '13px', transition: 'background 0.2s',
+                   background: value === opt ? 'rgba(78,205,196,0.15)' : 'transparent'
+                 }}
+                 onMouseOver={(e) => e.target.style.background = 'var(--bg-surface-hover)'}
+                 onMouseOut={(e) => e.target.style.background = value === opt ? 'rgba(78,205,196,0.15)' : 'transparent'}
+            >
+              {opt}
+            </div>
+          ))}
+          <div style={{ height: '1px', background: 'rgba(255,255,255,0.1)', margin: '4px 0' }} />
+          <div onClick={() => { setShowOptions(false); }}
+               style={{
+                 padding: '8px 12px', cursor: 'pointer', borderRadius: '4px',
+                 color: 'var(--text-muted)', fontSize: '12px', fontStyle: 'italic'
+               }}
+               onMouseOver={(e) => e.target.style.background = 'var(--bg-surface-hover)'}
+               onMouseOut={(e) => e.target.style.background = 'transparent'}
+          >
+            ✏️ Tùy chọn nhập tay
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 function App() {
   const [candidates, setCandidates] = useState(mockCandidates);
@@ -14,12 +77,24 @@ function App() {
   const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [masterData, setMasterData] = useState(defaultMasterData);
 
   // Load dữ liệu từ SQLite khi mở trang
   useEffect(() => {
     checkOutlookStatus();
     loadCandidatesFromDB();
+    fetchMasterData();
   }, []);
+
+  const fetchMasterData = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/master-data`);
+      const data = await res.json();
+      if (data && data.sources) setMasterData(data);
+    } catch (e) {
+      console.log('Backend chưa chạy, dùng master data mẫu.');
+    }
+  };
 
   const loadCandidatesFromDB = async () => {
     try {
@@ -231,8 +306,23 @@ function App() {
       {/* Sidebar Navigation */}
       <aside className={`sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`}>
         <div className="sidebar-logo">
-          <img src="/logo.png" alt="Logo" style={{ height: '32px', objectFit: 'contain', filter: 'drop-shadow(0 0 8px var(--primary-glow))' }} />
-          <span>HR</span>
+          {!isSidebarCollapsed ? (
+            <>
+              <img src="/logo.png" alt="Logo" style={{ height: '26px', objectFit: 'contain', filter: 'drop-shadow(0 0 8px var(--primary-glow))' }} />
+              <span style={{ fontSize: '14px', fontWeight: '800', fontFamily: "'Outfit', sans-serif", letterSpacing: '0.8px', background: 'linear-gradient(45deg, #f0941c, #f1c40f)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginLeft: '-2px', filter: 'drop-shadow(0 2px 4px rgba(240, 148, 28, 0.3))', textTransform: 'uppercase' }}>Recruit</span>
+            </>
+          ) : (
+            <div style={{
+              width: '38px', height: '38px', borderRadius: '10px', flexShrink: 0,
+              background: 'linear-gradient(135deg, rgba(240, 148, 28, 0.2), rgba(240, 148, 28, 0.05))', 
+              border: '1px solid rgba(240, 148, 28, 0.3)',
+              color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontFamily: 'Outfit, sans-serif', fontWeight: '800', fontSize: '18px', 
+              boxShadow: '0 4px 12px rgba(240, 148, 28, 0.15)'
+            }}>
+              C
+            </div>
+          )}
         </div>
         <div className="sidebar-toggle-btn" onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}>
           {isSidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
@@ -267,9 +357,7 @@ function App() {
 
       {/* Main Content Area */}
       <main className="main-content">
-        <datalist id="hrPersonList">
-          {masterData.hrPersons.map(p => <option key={p} value={p} />)}
-        </datalist>
+
         <header className="topbar">
           <div className="topbar-left">
             <h1>
@@ -454,31 +542,29 @@ function App() {
                     <tr key={cand.id}>
                       <td style={{ fontWeight: '500', color: '#fff' }}>{cand.name}<div style={{fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px'}} className="tag">{cand.position}</div></td>
                       <td style={{ padding: '6px 12px' }}>
-                        <input className="input-inline" list="hrPersonList" value={cand.hrPerson || ''} placeholder="-" onChange={(e) => handleUpdateCandidate(cand.id, 'hrPerson', e.target.value)} />
+                        <ComboInput options={masterData.hrPersons} value={cand.hrPerson || ''} placeholder="-" onChange={(val) => handleUpdateCandidate(cand.id, 'hrPerson', val)} />
                       </td>
                       <td style={{ padding: '6px 12px' }}>
-                        <select 
-                          className={`select-inline ${getDropdownClass(cand.cvStatus || '')}`}
+                        <ComboInput 
+                          options={masterData.scrStatus || []} 
                           value={cand.cvStatus || ''} 
-                          onChange={(e) => handleUpdateCandidate(cand.id, 'cvStatus', e.target.value)}
-                        >
-                          <option value="">- Chọn -</option>
-                          {masterData.scrStatus.map(st => <option key={st} value={st}>{st}</option>)}
-                        </select>
+                          placeholder="- Chọn -" 
+                          className={getDropdownClass(cand.cvStatus || '')} 
+                          onChange={(val) => handleUpdateCandidate(cand.id, 'cvStatus', val)} 
+                        />
                       </td>
                       
                       <td style={{ padding: '6px 12px' }}>
                         <input className="input-inline" value={cand.scrNote || ''} placeholder="Nhập ghi chú..." onChange={(e) => handleUpdateCandidate(cand.id, 'scrNote', e.target.value)} style={{minWidth: '200px'}} />
                       </td>
                       <td style={{ padding: '6px 12px' }}>
-                        <select 
-                          className={`select-inline ${getDropdownClass(cand.scrResult || '')}`}
+                        <ComboInput 
+                          options={masterData.scrResult || []} 
                           value={cand.scrResult || ''} 
-                          onChange={(e) => handleUpdateCandidate(cand.id, 'scrResult', e.target.value)}
-                        >
-                          <option value="">- Chọn -</option>
-                          {masterData.scrResult.map(st => <option key={st} value={st}>{st}</option>)}
-                        </select>
+                          placeholder="- Chọn -" 
+                          className={getDropdownClass(cand.scrResult || '')} 
+                          onChange={(val) => handleUpdateCandidate(cand.id, 'scrResult', val)} 
+                        />
                       </td>
                       <td style={{ padding: '6px 12px' }}>
                         <input className="input-inline" value={cand.scrReason || ''} placeholder="-" onChange={(e) => handleUpdateCandidate(cand.id, 'scrReason', e.target.value)} />
@@ -488,28 +574,26 @@ function App() {
                         <input className="input-inline" value={cand.intTime || ''} placeholder="VD: 14:00 20/10" onChange={(e) => handleUpdateCandidate(cand.id, 'intTime', e.target.value)} style={{ color: 'var(--primary)', minWidth: '140px' }} />
                       </td>
                       <td style={{ padding: '6px 12px' }}>
-                        <select 
-                          className={`select-inline ${getDropdownClass(cand.intResult || '')}`}
+                        <ComboInput 
+                          options={masterData.intResult || []} 
                           value={cand.intResult || ''} 
-                          onChange={(e) => handleUpdateCandidate(cand.id, 'intResult', e.target.value)}
-                        >
-                          <option value="">- Chọn -</option>
-                          {masterData.intResult.map(st => <option key={st} value={st}>{st}</option>)}
-                        </select>
+                          placeholder="- Chọn -" 
+                          className={getDropdownClass(cand.intResult || '')} 
+                          onChange={(val) => handleUpdateCandidate(cand.id, 'intResult', val)} 
+                        />
                       </td>
                       <td style={{ padding: '6px 12px' }}>
                         <input className="input-inline" value={cand.intReason || ''} placeholder="-" onChange={(e) => handleUpdateCandidate(cand.id, 'intReason', e.target.value)} />
                       </td>
 
                       <td style={{ padding: '6px 12px' }}>
-                        <select 
-                          className={`select-inline ${getDropdownClass(cand.offResult || '')}`}
+                        <ComboInput 
+                          options={masterData.offResult || []} 
                           value={cand.offResult || ''} 
-                          onChange={(e) => handleUpdateCandidate(cand.id, 'offResult', e.target.value)}
-                        >
-                          <option value="">- Chọn -</option>
-                          {masterData.offResult.map(st => <option key={st} value={st}>{st}</option>)}
-                        </select>
+                          placeholder="- Chọn -" 
+                          className={getDropdownClass(cand.offResult || '')} 
+                          onChange={(val) => handleUpdateCandidate(cand.id, 'offResult', val)} 
+                        />
                       </td>
                       <td style={{ padding: '6px 12px' }}>
                         <input className="input-inline" value={cand.offReason || ''} placeholder="-" onChange={(e) => handleUpdateCandidate(cand.id, 'offReason', e.target.value)} />
@@ -563,7 +647,7 @@ function App() {
                       <td>{cand.position}</td>
                       <td><span className="tag">{cand.source}</span></td>
                       <td style={{ padding: '6px 12px' }}>
-                        <input className="input-inline" list="hrPersonList" value={cand.hrPerson || ''} placeholder="-" onChange={(e) => handleUpdateCandidate(cand.id, 'hrPerson', e.target.value)} />
+                        <ComboInput options={masterData.hrPersons} value={cand.hrPerson || ''} placeholder="-" onChange={(val) => handleUpdateCandidate(cand.id, 'hrPerson', val)} />
                       </td>
                       <td style={{ padding: '6px 12px' }}>
                         <input className="input-inline" value={cand.intTime || ''} placeholder="VD: 14:00 20/10" onChange={(e) => handleUpdateCandidate(cand.id, 'intTime', e.target.value)} style={{ color: 'var(--primary)', minWidth: '140px', fontWeight: '600' }} />
@@ -614,7 +698,7 @@ function App() {
                       <td>{cand.position}</td>
                       <td><span className="tag">{cand.source}</span></td>
                       <td style={{ padding: '6px 12px' }}>
-                        <input className="input-inline" list="hrPersonList" value={cand.hrPerson || ''} placeholder="-" onChange={(e) => handleUpdateCandidate(cand.id, 'hrPerson', e.target.value)} />
+                        <ComboInput options={masterData.hrPersons} value={cand.hrPerson || ''} placeholder="-" onChange={(val) => handleUpdateCandidate(cand.id, 'hrPerson', val)} />
                       </td>
                       <td style={{ padding: '6px 12px' }}>
                         <input type="date" className="input-inline" value={cand.onboardDate || ''} onChange={(e) => handleUpdateCandidate(cand.id, 'onboardDate', e.target.value)} style={{ color: 'var(--success)', fontWeight: '600' }} />
@@ -640,6 +724,7 @@ function App() {
           onLogin={handleOutlookLogin}
           onRefreshStatus={checkOutlookStatus}
           masterData={masterData}
+          fetchMasterData={fetchMasterData}
         />}
       </main>
     </div>
@@ -649,13 +734,65 @@ function App() {
 // ============================================================
 // Settings Page Component
 // ============================================================
-function SettingsPage({ outlookStatus, onLogin, onRefreshStatus, masterData }) {
+const EditableList = ({ items = [], onChange, title, color }) => {
+  const [newVal, setNewVal] = useState('');
+  return (
+    <div className="glass-panel" style={{ padding: '20px' }}>
+      <h3 style={{ fontSize: '14px', color, marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>{title}</h3>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
+        {items.map(item => (
+          <div key={item} style={{
+            display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--text-main)', 
+            background: 'rgba(255,255,255,0.05)', padding: '6px 12px', borderRadius: '16px', border: '1px solid var(--border-color)'
+          }}>
+            {item}
+            <span onClick={() => onChange(items.filter(i => i !== item))} style={{ cursor: 'pointer', opacity: 0.6, fontSize: '12px', padding: '0 4px' }}>✕</span>
+          </div>
+        ))}
+      </div>
+      <div style={{ display: 'flex', gap: '8px' }}>
+        <input className="input-inline" value={newVal} onChange={e => setNewVal(e.target.value)} onKeyDown={e => { if(e.key === 'Enter' && newVal.trim() && !items.includes(newVal.trim())) { onChange([...items, newVal.trim()]); setNewVal(''); } }} placeholder="Thêm giá trị mới..." style={{ flex: 1, padding: '8px 12px' }} />
+        <button className="btn-icon" onClick={() => { if(newVal.trim() && !items.includes(newVal.trim())) { onChange([...items, newVal.trim()]); setNewVal(''); } }} style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: 'none', borderRadius: '6px', padding: '0 16px', cursor: 'pointer', fontWeight: '500' }}>Thêm</button>
+      </div>
+    </div>
+  );
+};
+
+function SettingsPage({ outlookStatus, onLogin, onRefreshStatus, masterData, fetchMasterData }) {
   const [config, setConfig] = useState({ AZURE_CLIENT_ID: '', AZURE_TENANT_ID: 'common', AZURE_CLIENT_SECRET: '', AZURE_CLIENT_SECRET_SET: false });
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState(null);
   const [showSecret, setShowSecret] = useState(false);
   const [scanHistory, setScanHistory] = useState([]);
   const [settingsTab, setSettingsTab] = useState('outlook');
+
+  const [localMaster, setLocalMaster] = useState(masterData);
+  const [savingMaster, setSavingMaster] = useState(false);
+
+  useEffect(() => { setLocalMaster(masterData); }, [masterData]);
+
+  const handleUpdateMaster = (key, items) => setLocalMaster(prev => ({ ...prev, [key]: items }));
+
+  const handleSaveMaster = async () => {
+    setSavingMaster(true);
+    setSaveMsg(null);
+    try {
+      const res = await fetch(`${API_URL}/api/master-data`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(localMaster)
+      });
+      if(res.ok) {
+        if(fetchMasterData) fetchMasterData();
+        setSaveMsg({ type: 'success', text: 'Cập nhật Master Data thành công!' });
+        setTimeout(() => setSaveMsg(null), 3000);
+      }
+    } catch (e) {
+      setSaveMsg({ type: 'error', text: 'Lỗi lưu Master Data.' });
+    } finally {
+      setSavingMaster(false);
+    }
+  };
 
   useEffect(() => {
     fetchConfig();
@@ -752,7 +889,7 @@ function SettingsPage({ outlookStatus, onLogin, onRefreshStatus, masterData }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
               {/* SECTION: DATABASE */}
               <div className="glass-panel" style={{ padding: '24px' }}>
-                {sectionTitle(<DatabaseIcon size={18} />, 'Lưu trữ Database (Supabase/PostgreSQL)', '#4ecdc4')}
+                {sectionTitle(<Database size={18} />, 'Lưu trữ Database (Supabase/PostgreSQL)', '#4ecdc4')}
                 <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px', lineHeight: '1.5' }}>
                   Mặc định hệ thống dùng SQLite. Để lưu dữ liệu vĩnh viễn trên Render, hãy dán <b>Connection string (URI)</b> từ Supabase vào đây. <br/>
                   <i>(Ví dụ: postgresql://postgres:[matkhau]...)</i>
@@ -878,7 +1015,7 @@ function SettingsPage({ outlookStatus, onLogin, onRefreshStatus, masterData }) {
                 </div>
                 <div style={{ display: 'flex', gap: '10px' }}>
                   <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'rgba(0,120,212,0.15)', color: '#0078d4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '700', flexShrink: 0 }}>4</span>
-                  <div>Redirect URI: <strong style={{ color: '#fff' }}>Web</strong> → <code style={{ background: 'rgba(0,120,212,0.1)', padding: '2px 6px', borderRadius: '4px', fontSize: '12px', color: '#0078d4' }}>http://localhost:3001/auth/callback</code></div>
+                  <div>Redirect URI: <strong style={{ color: '#fff' }}>Web</strong> → <code style={{ background: 'rgba(0,120,212,0.1)', padding: '2px 6px', borderRadius: '4px', fontSize: '12px', color: '#0078d4' }}>https://hr-cas.onrender.com/auth/callback</code></div>
                 </div>
                 <div style={{ display: 'flex', gap: '10px' }}>
                   <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'rgba(0,120,212,0.15)', color: '#0078d4', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: '700', flexShrink: 0 }}>5</span>
@@ -921,42 +1058,38 @@ function SettingsPage({ outlookStatus, onLogin, onRefreshStatus, masterData }) {
       )}
 
       {/* ===== MASTER DATA ===== */}
-      {settingsTab === 'master' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px' }}>
-            <div className="glass-panel" style={{ padding: '20px' }}>
-              <h3 style={{ fontSize: '14px', color: 'var(--info)', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>Nguồn</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {masterData.sources.map(s => <span key={s} className="tag" style={{ alignSelf: 'flex-start' }}>{s}</span>)}
-              </div>
+      {settingsTab === 'master' && localMaster && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)', padding: '16px 24px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+            <div>
+              <h3 style={{ fontSize: '16px', color: '#fff', margin: '0 0 6px 0' }}>Tùy chỉnh Dữ liệu Master</h3>
+              <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)' }}>Mục này sẽ cho phép bạn thêm, bớt các lựa chọn trong toàn bộ màn hình hệ thống.</p>
             </div>
-            <div className="glass-panel" style={{ padding: '20px' }}>
-              <h3 style={{ fontSize: '14px', color: 'var(--success)', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>Nhân sự xử lý</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {masterData.hrPersons.map(s => <span key={s} style={{ color: 'var(--text-main)', fontSize: '13px' }}>- {s}</span>)}
-              </div>
-            </div>
-            <div className="glass-panel" style={{ padding: '20px' }}>
-              <h3 style={{ fontSize: '14px', color: 'var(--warning)', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>Trạng thái & Lọc</h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
-                <div style={{ color: 'var(--text-secondary)' }}><strong>Trạng thái Screening:</strong></div>
-                <div>{masterData.scrStatus.join(', ')}</div>
-                <div style={{ color: 'var(--text-secondary)', marginTop: '8px' }}><strong>Kết quả Screening:</strong></div>
-                <div>{masterData.scrResult.join(', ')}</div>
-                <div style={{ color: 'var(--text-secondary)', marginTop: '8px' }}><strong>Kết quả Phỏng vấn:</strong></div>
-                <div>{masterData.intResult.join(', ')}</div>
-                <div style={{ color: 'var(--text-secondary)', marginTop: '8px' }}><strong>Kết quả Nhận việc:</strong></div>
-                <div>{masterData.offResult.join(', ')}</div>
-              </div>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <button onClick={handleSaveMaster} disabled={savingMaster} style={{
+                  padding: '10px 24px', borderRadius: '8px', border: 'none', cursor: savingMaster ? 'wait' : 'pointer',
+                  background: '#0078d4', color: '#fff', fontWeight: '600', fontSize: '14px',
+                  display: 'flex', alignItems: 'center', gap: '8px', opacity: savingMaster ? 0.7 : 1,
+                  boxShadow: '0 4px 12px rgba(0,120,212,0.3)', transition: 'all 0.2s'
+                }}>
+                  {savingMaster ? <Loader size={16} className="spin-animation" /> : <CheckCircle size={16} />}
+                  {savingMaster ? 'Đang lưu...' : 'Lưu Danh Mục'}
+                </button>
             </div>
           </div>
-          <div className="glass-panel" style={{ padding: '20px' }}>
-            <h3 style={{ fontSize: '14px', color: 'var(--danger)', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>Vị trí ứng tuyển</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px' }}>
-              {masterData.positions.map(p => (
-                <div key={p} style={{ fontSize: '13px', color: 'var(--text-main)', background: 'rgba(255,255,255,0.02)', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>{p}</div>
-              ))}
-            </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '20px' }}>
+            <EditableList items={localMaster.sources || []} onChange={v => handleUpdateMaster('sources', v)} title="Nguồn (Sources)" color="var(--info)" />
+            <EditableList items={localMaster.hrPersons || []} onChange={v => handleUpdateMaster('hrPersons', v)} title="Nhân sự xử lý (HR Persons)" color="var(--success)" />
+            <EditableList items={localMaster.positions || []} onChange={v => handleUpdateMaster('positions', v)} title="Vị trí ứng tuyển (Positions)" color="var(--danger)" />
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '20px' }}>
+            <EditableList items={localMaster.scrStatus || []} onChange={v => handleUpdateMaster('scrStatus', v)} title="Trạng thái Screening (Status)" color="var(--warning)" />
+            <EditableList items={localMaster.scrResult || []} onChange={v => handleUpdateMaster('scrResult', v)} title="Kết quả Screening (Result)" color="var(--warning)" />
+            <EditableList items={localMaster.intResult || []} onChange={v => handleUpdateMaster('intResult', v)} title="Kết quả Phỏng vấn (Interview)" color="var(--primary)" />
+            <EditableList items={localMaster.offResult || []} onChange={v => handleUpdateMaster('offResult', v)} title="Kết quả Nhận việc (Offer/Onboard)" color="#9b59b6" />
           </div>
         </div>
       )}

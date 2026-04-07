@@ -72,7 +72,7 @@ app.post('/api/scan/outlook', async (req, res) => {
         if (!accessToken) {
             return res.status(401).json({
                 error: 'Chưa đăng nhập Outlook',
-                loginUrl: 'http://localhost:3001/auth/login',
+                loginUrl: `${process.env.APP_URL || 'https://hr-cas.onrender.com'}/auth/login`,
                 message: 'Bấm "Kết nối Outlook" để đăng nhập trước.'
             });
         }
@@ -377,6 +377,50 @@ if (fs.existsSync(frontendBuild)) {
 
 // ============================================================
 // Start Server
+// ============================================================
+// API: Master Data (Quản lý các danh sách dropdown)
+// ============================================================
+const masterDataPath = path.join(__dirname, 'master_data.json');
+const defaultMasterData = {
+  sources: ['Mail HR', 'Joboko', 'Vietnamworks', 'Vieclam24h', 'LinkedIn', 'TopCV', 'Mail Info', 'JobsGo', 'UCTalent', 'Agri.job'],
+  positions: [
+    'Tự động hóa - Kỹ sư', 'Tự động hóa - TTS', 'Hệ thống điện - TTS', 'Hệ thống điện - Kỹ sư',
+    'Vận hành Solar - Kỹ sư', 'Cơ Điện - KTV Cơ khí NN', 'Cơ Điện - TTS', 'Marketing', 'Fullstack Dev',
+    'KS Nông nghiệp (Ninh Thuận)', 'KS Nông nghiệp (Đà Nẵng)', 'Nông sản - KD Phát triển TT',
+    'Nông sản - TTS Kinh doanh', 'Nông sản - Vận hành cung ứng', 'Thương mại Vật tư', 'Môi trường - Kỹ sư',
+    'HCNS - TTS', 'Mua hàng dự án (Điện/ Solar)', 'Kế toán vật tư - dự án', 'TTS kế toán', 'TTS MKT', 'TTS O&M Solar'
+  ],
+  hrPersons: ['Ms. Linh', 'Ms. Thảo', 'Ms. Lai', 'Mr. Đức Anh', 'Mr. Rôn'],
+  scrStatus: ['CV not accept', 'Screening', 'Pending'],
+  scrResult: ['Interview', 'Fail', 'Pending'],
+  intResult: ['Pass', 'Fail', 'Pending'],
+  offResult: ['Xác nhận', 'Từ chối']
+};
+
+app.get('/api/master-data', (req, res) => {
+    try {
+        if (!fs.existsSync(masterDataPath)) {
+            fs.writeFileSync(masterDataPath, JSON.stringify(defaultMasterData, null, 2));
+            return res.json(defaultMasterData);
+        }
+        const data = JSON.parse(fs.readFileSync(masterDataPath, 'utf8'));
+        res.json(data);
+    } catch (e) {
+        console.error('Lỗi đọc master data:', e);
+        res.json(defaultMasterData);
+    }
+});
+
+app.post('/api/master-data', (req, res) => {
+    try {
+        fs.writeFileSync(masterDataPath, JSON.stringify(req.body, null, 2));
+        res.json({ message: 'Lưu cấu hình thành công!' });
+    } catch (e) {
+        console.error('Lỗi lưu master data:', e);
+        res.status(500).json({ error: 'Không thể lưu Master Data' });
+    }
+});
+
 // ============================================================
 const PORT = process.env.PORT || 3001;
 

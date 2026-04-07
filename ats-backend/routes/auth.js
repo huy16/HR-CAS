@@ -75,7 +75,8 @@ router.get('/status', (req, res) => {
 router.get('/login', async (req, res) => {
     try {
         const msalClient = getMsalClient();
-        const redirectUri = `${process.env.APP_URL || 'http://localhost:3001'}/auth/callback`;
+        const APP_URL = process.env.APP_URL || 'https://hr-cas.onrender.com';
+        const redirectUri = `${APP_URL}/auth/callback`;
 
         const authUrl = await msalClient.getAuthCodeUrl({
             scopes: SCOPES,
@@ -111,7 +112,8 @@ router.get('/callback', async (req, res) => {
 
     try {
         const msalClient = getMsalClient();
-        const redirectUri = `${process.env.APP_URL || 'http://localhost:3001'}/auth/callback`;
+        const APP_URL = process.env.APP_URL || 'https://hr-cas.onrender.com';
+        const redirectUri = `${APP_URL}/auth/callback`;
 
         const tokenResponse = await msalClient.acquireTokenByCode({
             code,

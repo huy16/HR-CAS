@@ -49,7 +49,7 @@ export const masterData = {
     'Nông sản - TTS Kinh doanh', 'Nông sản - Vận hành cung ứng', 'Thương mại Vật tư', 'Môi trường - Kỹ sư',
     'HCNS - TTS', 'Mua hàng dự án (Điện/ Solar)', 'Kế toán vật tư - dự án', 'TTS kế toán', 'TTS MKT', 'TTS O&M Solar'
   ],
-  hrPersons: ['Linh', 'Thảo', 'Lai', 'Đức Anh', 'Rôn'],
+  hrPersons: ['Ms. Linh', 'Ms. Thảo', 'Ms. Lai', 'Mr. Đức Anh', 'Mr. Rôn'],
   scrStatus: ['CV not accept', 'Screening', 'Pending'],
   scrResult: ['Interview', 'Fail', 'Pending'],
   intResult: ['Pass', 'Fail', 'Pending'],
