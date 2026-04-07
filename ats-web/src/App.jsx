@@ -267,6 +267,9 @@ function App() {
 
       {/* Main Content Area */}
       <main className="main-content">
+        <datalist id="hrPersonList">
+          {masterData.hrPersons.map(p => <option key={p} value={p} />)}
+        </datalist>
         <header className="topbar">
           <div className="topbar-left">
             <h1>
@@ -450,7 +453,9 @@ function App() {
                   {candidates.map((cand) => (
                     <tr key={cand.id}>
                       <td style={{ fontWeight: '500', color: '#fff' }}>{cand.name}<div style={{fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px'}} className="tag">{cand.position}</div></td>
-                      <td style={{ color: 'var(--text-main)' }}>{cand.hrPerson || '-'}</td>
+                      <td style={{ padding: '6px 12px' }}>
+                        <input className="input-inline" list="hrPersonList" value={cand.hrPerson || ''} placeholder="-" onChange={(e) => handleUpdateCandidate(cand.id, 'hrPerson', e.target.value)} />
+                      </td>
                       <td style={{ padding: '6px 12px' }}>
                         <select 
                           className={`select-inline ${getDropdownClass(cand.cvStatus || '')}`}
@@ -462,7 +467,9 @@ function App() {
                         </select>
                       </td>
                       
-                      <td style={{ color: 'var(--text-muted)' }}>{cand.scrNote || '-'}</td>
+                      <td style={{ padding: '6px 12px' }}>
+                        <input className="input-inline" value={cand.scrNote || ''} placeholder="Nhập ghi chú..." onChange={(e) => handleUpdateCandidate(cand.id, 'scrNote', e.target.value)} style={{minWidth: '200px'}} />
+                      </td>
                       <td style={{ padding: '6px 12px' }}>
                         <select 
                           className={`select-inline ${getDropdownClass(cand.scrResult || '')}`}
@@ -473,9 +480,13 @@ function App() {
                           {masterData.scrResult.map(st => <option key={st} value={st}>{st}</option>)}
                         </select>
                       </td>
-                      <td style={{ color: 'var(--text-muted)' }}>{cand.scrReason || '-'}</td>
+                      <td style={{ padding: '6px 12px' }}>
+                        <input className="input-inline" value={cand.scrReason || ''} placeholder="-" onChange={(e) => handleUpdateCandidate(cand.id, 'scrReason', e.target.value)} />
+                      </td>
 
-                      <td style={{ color: 'var(--primary)' }}>{cand.intTime || '-'}</td>
+                      <td style={{ padding: '6px 12px' }}>
+                        <input className="input-inline" value={cand.intTime || ''} placeholder="VD: 14:00 20/10" onChange={(e) => handleUpdateCandidate(cand.id, 'intTime', e.target.value)} style={{ color: 'var(--primary)', minWidth: '140px' }} />
+                      </td>
                       <td style={{ padding: '6px 12px' }}>
                         <select 
                           className={`select-inline ${getDropdownClass(cand.intResult || '')}`}
@@ -486,7 +497,9 @@ function App() {
                           {masterData.intResult.map(st => <option key={st} value={st}>{st}</option>)}
                         </select>
                       </td>
-                      <td style={{ color: 'var(--text-muted)' }}>{cand.intReason || '-'}</td>
+                      <td style={{ padding: '6px 12px' }}>
+                        <input className="input-inline" value={cand.intReason || ''} placeholder="-" onChange={(e) => handleUpdateCandidate(cand.id, 'intReason', e.target.value)} />
+                      </td>
 
                       <td style={{ padding: '6px 12px' }}>
                         <select 
@@ -498,8 +511,12 @@ function App() {
                           {masterData.offResult.map(st => <option key={st} value={st}>{st}</option>)}
                         </select>
                       </td>
-                      <td style={{ color: 'var(--text-muted)' }}>{cand.offReason || '-'}</td>
-                      <td style={{ color: 'var(--success)', fontWeight: '500' }}>{cand.onboardDate || '-'}</td>
+                      <td style={{ padding: '6px 12px' }}>
+                        <input className="input-inline" value={cand.offReason || ''} placeholder="-" onChange={(e) => handleUpdateCandidate(cand.id, 'offReason', e.target.value)} />
+                      </td>
+                      <td style={{ padding: '6px 12px' }}>
+                        <input type="date" className="input-inline" value={cand.onboardDate || ''} onChange={(e) => handleUpdateCandidate(cand.id, 'onboardDate', e.target.value)} style={{ color: 'var(--success)' }} />
+                      </td>
                     </tr>
                   ))}
                   {candidates.length === 0 && (
@@ -545,8 +562,12 @@ function App() {
                       </td>
                       <td>{cand.position}</td>
                       <td><span className="tag">{cand.source}</span></td>
-                      <td style={{ color: 'var(--text-muted)' }}>{cand.hrPerson || '-'}</td>
-                      <td style={{ color: 'var(--primary)', fontWeight: '600' }}>{cand.intTime || '-'}</td>
+                      <td style={{ padding: '6px 12px' }}>
+                        <input className="input-inline" list="hrPersonList" value={cand.hrPerson || ''} placeholder="-" onChange={(e) => handleUpdateCandidate(cand.id, 'hrPerson', e.target.value)} />
+                      </td>
+                      <td style={{ padding: '6px 12px' }}>
+                        <input className="input-inline" value={cand.intTime || ''} placeholder="VD: 14:00 20/10" onChange={(e) => handleUpdateCandidate(cand.id, 'intTime', e.target.value)} style={{ color: 'var(--primary)', minWidth: '140px', fontWeight: '600' }} />
+                      </td>
                     </tr>
                   ))}
                   {candidates.filter(c => c.status === 'INTERVIEW').length === 0 && (
@@ -592,8 +613,12 @@ function App() {
                       </td>
                       <td>{cand.position}</td>
                       <td><span className="tag">{cand.source}</span></td>
-                      <td style={{ color: 'var(--text-muted)' }}>{cand.hrPerson || '-'}</td>
-                      <td style={{ color: 'var(--success)', fontWeight: '600' }}>{cand.onboardDate || cand.appliedDate}</td>
+                      <td style={{ padding: '6px 12px' }}>
+                        <input className="input-inline" list="hrPersonList" value={cand.hrPerson || ''} placeholder="-" onChange={(e) => handleUpdateCandidate(cand.id, 'hrPerson', e.target.value)} />
+                      </td>
+                      <td style={{ padding: '6px 12px' }}>
+                        <input type="date" className="input-inline" value={cand.onboardDate || ''} onChange={(e) => handleUpdateCandidate(cand.id, 'onboardDate', e.target.value)} style={{ color: 'var(--success)', fontWeight: '600' }} />
+                      </td>
                     </tr>
                   ))}
                   {candidates.filter(c => c.status === 'ONBOARD').length === 0 && (

@@ -363,6 +363,30 @@
   box-shadow: 0 0 0 2px rgba(240, 148, 28, 0.2);
 }
 
+/* Inline Text/Datalist Input */
+.input-inline {
+  background: transparent;
+  color: var(--text-main);
+  border: 1px solid transparent;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: all 0.2s ease;
+  width: 100%;
+  min-width: 110px;
+}
+.input-inline:hover {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.input-inline:focus {
+  background: var(--bg-surface-elevated);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(240, 148, 28, 0.2);
+}
+
 /* Dynamic State Colors */
 .select-inline.success {
   background-color: rgba(16, 185, 129, 0.1);
