@@ -78,6 +78,7 @@ function App() {
   const [scanResult, setScanResult] = useState(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [masterData, setMasterData] = useState(defaultMasterData);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Load dữ liệu từ SQLite khi mở trang
   useEffect(() => {
@@ -264,13 +265,29 @@ function App() {
     }
   };
 
-  const handleUpdateCandidate = (id, field, value) => {
+  const handleUpdateCandidate = async (id, field, value) => {
+    // 1. Cập nhật local state trước để UI mượt mà
     setCandidates(prev => prev.map(cand => {
       if (cand.id === id) {
         return { ...cand, [field]: value };
       }
       return cand;
     }));
+
+    // 2. Gửi lệnh lưu ngầm xuống Backend
+    setIsSaving(true);
+    try {
+      await fetch(`${API_URL}/api/candidates/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [field]: value })
+      });
+      // Đợi một chút để icon "Saving" kịp hiện lên cho pro
+      setTimeout(() => setIsSaving(false), 800);
+    } catch (e) {
+      console.error('Lỗi auto-save:', e);
+      setIsSaving(false);
+    }
   };
 
   const getDropdownClass = (value) => {
@@ -282,18 +299,36 @@ function App() {
     return '';
   };
 
-  const onDragEnd = (result) => {
+  const onDragEnd = async (result) => {
     if (!result.destination) return;
     const { source, destination } = result;
 
     if (source.droppableId !== destination.droppableId) {
+      const candidateId = result.draggableId;
+      const newStatus = destination.droppableId;
+
+      // 1. Cập nhật local state
       const updatedCandidates = candidates.map((cand) => {
-        if (cand.id === result.draggableId) {
-          return { ...cand, status: destination.droppableId };
+        if (cand.id === candidateId) {
+          return { ...cand, status: newStatus };
         }
         return cand;
       });
       setCandidates(updatedCandidates);
+
+      // 2. Lưu trạng thái mới
+      setIsSaving(true);
+      try {
+        await fetch(`${API_URL}/api/candidates/${candidateId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: newStatus })
+        });
+        setTimeout(() => setIsSaving(false), 800);
+      } catch (e) {
+        console.error('Lỗi auto-save drag:', e);
+        setIsSaving(false);
+      }
     }
   };
 
@@ -370,6 +405,16 @@ function App() {
             </h1>
           </div>
           <div className="topbar-right">
+            {/* Sync Indicator */}
+            <div style={{ marginRight: '16px', display: 'flex', alignItems: 'center', gap: '8px', color: isSaving ? 'var(--primary)' : 'var(--text-muted)', fontSize: '13px', transition: 'all 0.3s', opacity: isSaving ? 1 : 0.6 }}>
+              {isSaving ? (
+                <Loader size={14} className="spin-animation" style={{ color: 'var(--primary)' }} />
+              ) : (
+                <CheckCircle size={14} style={{ color: 'var(--success)' }} />
+              )}
+              <span style={{ fontWeight: '500' }}>{isSaving ? 'Đang lưu...' : 'Đã lưu Cloud'}</span>
+            </div>
+
             <div className="search-bar" style={{ display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '6px 12px' }}>
               <Search size={18} color="var(--text-muted)" />
               <input type="text" placeholder="Tìm kiếm ứng viên..." style={{ background: 'transparent', border: 'none', boxShadow: 'none', color: '#fff' }} />
