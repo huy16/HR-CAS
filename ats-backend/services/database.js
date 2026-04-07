@@ -9,7 +9,7 @@ const Database = require('better-sqlite3');
 const path = require('path');
 
 // Điền chuỗi kết nối Supabase của bạn vào dấu nháy đơn dưới đây (nhớ thay đổi [YOUR-PASSWORD] thành mật khẩu thực tế)
-const SUPABASE_URL = 'postgresql://postgres:Phattrienbenvung@db.sypgzmdysgiiuuwtcacj.supabase.co:5432/postgres';
+const SUPABASE_URL = 'postgresql://postgres:[YOUR-PASSWORD]@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres';
 
 let isPostgres = false;
 
