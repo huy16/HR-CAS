@@ -1,0 +1,25 @@
+{
+  "name": "ats-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@azure/msal-node": "^5.1.2",
+    "@microsoft/microsoft-graph-client": "^3.0.7",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.1",
+    "express": "^5.2.1",
+    "imap-simple": "^5.1.0",
+    "isomorphic-fetch": "^3.0.0",
+    "mailparser": "^3.9.6",
+    "multer": "^2.1.1",
+    "node-cron": "^4.2.1"
+  }
+}
