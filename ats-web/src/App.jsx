@@ -657,6 +657,7 @@ function SettingsPage({ outlookStatus, onLogin, onRefreshStatus, masterData }) {
         AZURE_TENANT_ID: config.AZURE_TENANT_ID,
       };
       if (config.AZURE_CLIENT_SECRET) body.AZURE_CLIENT_SECRET = config.AZURE_CLIENT_SECRET;
+      if (config.DATABASE_URL) body.DATABASE_URL = config.DATABASE_URL;
       
       const res = await fetch(`${API_URL}/api/config`, {
         method: 'POST',
@@ -719,59 +720,81 @@ function SettingsPage({ outlookStatus, onLogin, onRefreshStatus, masterData }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '24px', alignItems: 'start' }}>
             {/* LEFT: Form cấu hình */}
-            <div className="glass-panel" style={{ padding: '24px' }}>
-              {sectionTitle(<Mail size={18} />, 'Cấu hình Microsoft Azure', '#0078d4')}
-
-              {/* Status Badge */}
-              <div style={{
-                padding: '12px 16px', borderRadius: '10px', marginBottom: '20px',
-                display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px',
-                background: outlookStatus.authenticated ? 'rgba(78,205,196,0.08)' : config.configured ? 'rgba(255,190,11,0.08)' : 'rgba(255,107,107,0.08)',
-                border: `1px solid ${outlookStatus.authenticated ? 'rgba(78,205,196,0.25)' : config.configured ? 'rgba(255,190,11,0.25)' : 'rgba(255,107,107,0.25)'}`,
-                color: outlookStatus.authenticated ? '#4ecdc4' : config.configured ? '#ffbe0b' : '#ff6b6b'
-              }}>
-                {outlookStatus.authenticated ? <CheckCircle size={16} /> : <Mail size={16} />}
-                <span style={{ fontWeight: '600' }}>
-                  {outlookStatus.authenticated ? `Đã kết nối: ${outlookStatus.account}` :
-                   config.configured ? 'Đã cấu hình — Chưa đăng nhập' : 'Chưa cấu hình'}
-                </span>
-                {outlookStatus.authenticated && (
-                  <button onClick={handleLogout} style={{ marginLeft: 'auto', background: 'none', border: '1px solid rgba(255,107,107,0.3)', color: '#ff6b6b', padding: '4px 12px', borderRadius: '6px', fontSize: '12px', cursor: 'pointer' }}>Đăng xuất</button>
-                )}
-              </div>
-
-              {/* Form Fields */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div>
-                  <label style={labelStyle}>Application (Client) ID</label>
-                  <input style={inputStyle} type="text" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                    value={config.AZURE_CLIENT_ID} onChange={e => setConfig(prev => ({ ...prev, AZURE_CLIENT_ID: e.target.value }))}
-                    onFocus={e => e.target.style.borderColor = '#0078d4'} onBlur={e => e.target.style.borderColor = 'var(--border-color)'}
-                  />
-                </div>
-                <div>
-                  <label style={labelStyle}>Directory (Tenant) ID</label>
-                  <input style={inputStyle} type="text" placeholder="common (mặc định)"
-                    value={config.AZURE_TENANT_ID} onChange={e => setConfig(prev => ({ ...prev, AZURE_TENANT_ID: e.target.value }))}
-                    onFocus={e => e.target.style.borderColor = '#0078d4'} onBlur={e => e.target.style.borderColor = 'var(--border-color)'}
-                  />
-                </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              {/* SECTION: DATABASE */}
+              <div className="glass-panel" style={{ padding: '24px' }}>
+                {sectionTitle(<DatabaseIcon size={18} />, 'Lưu trữ Database (Supabase/PostgreSQL)', '#4ecdc4')}
+                <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px', lineHeight: '1.5' }}>
+                  Mặc định hệ thống dùng SQLite. Để lưu dữ liệu vĩnh viễn trên Render, hãy dán <b>Connection string (URI)</b> từ Supabase vào đây. <br/>
+                  <i>(Ví dụ: postgresql://postgres:[matkhau]...)</i>
+                </p>
                 <div>
                   <label style={labelStyle}>
-                    Client Secret 
-                    {config.AZURE_CLIENT_SECRET_SET && <span style={{ color: '#4ecdc4', fontWeight: '400', marginLeft: '8px' }}>✓ Đã lưu</span>}
+                    Database URL
+                    {config.DATABASE_URL_SET && <span style={{ color: '#4ecdc4', fontWeight: '400', marginLeft: '8px' }}>✓ Đã lưu</span>}
                   </label>
-                  <div style={{ position: 'relative' }}>
-                    <input style={{ ...inputStyle, paddingRight: '60px' }}
-                      type={showSecret ? 'text' : 'password'}
-                      placeholder={config.AZURE_CLIENT_SECRET_SET ? '••••••••• (nhập mới để thay đổi)' : 'Nhập Client Secret'}
-                      value={config.AZURE_CLIENT_SECRET} onChange={e => setConfig(prev => ({ ...prev, AZURE_CLIENT_SECRET: e.target.value }))}
+                  <input style={inputStyle} type="text" placeholder={config.DATABASE_URL_SET ? '••••••••• (nhập mới để thay đổi)' : 'postgresql://...'}
+                    value={config.DATABASE_URL || ''} onChange={e => setConfig(prev => ({ ...prev, DATABASE_URL: e.target.value }))}
+                    onFocus={e => e.target.style.borderColor = '#4ecdc4'} onBlur={e => e.target.style.borderColor = 'var(--border-color)'}
+                  />
+                </div>
+              </div>
+
+              {/* SECTION: AZURE OUTLOOK */}
+              <div className="glass-panel" style={{ padding: '24px' }}>
+                {sectionTitle(<Mail size={18} />, 'Cấu hình Microsoft Azure (Outlook)', '#0078d4')}
+
+                {/* Status Badge */}
+                <div style={{
+                  padding: '12px 16px', borderRadius: '10px', marginBottom: '20px',
+                  display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px',
+                  background: outlookStatus.authenticated ? 'rgba(78,205,196,0.08)' : config.configured ? 'rgba(255,190,11,0.08)' : 'rgba(255,107,107,0.08)',
+                  border: `1px solid ${outlookStatus.authenticated ? 'rgba(78,205,196,0.25)' : config.configured ? 'rgba(255,190,11,0.25)' : 'rgba(255,107,107,0.25)'}`,
+                  color: outlookStatus.authenticated ? '#4ecdc4' : config.configured ? '#ffbe0b' : '#ff6b6b'
+                }}>
+                  {outlookStatus.authenticated ? <CheckCircle size={16} /> : <Mail size={16} />}
+                  <span style={{ fontWeight: '600' }}>
+                    {outlookStatus.authenticated ? `Đã kết nối: ${outlookStatus.account}` :
+                     config.configured ? 'Đã cấu hình — Chưa đăng nhập' : 'Chưa cấu hình'}
+                  </span>
+                  {outlookStatus.authenticated && (
+                    <button onClick={handleLogout} style={{ marginLeft: 'auto', background: 'none', border: '1px solid rgba(255,107,107,0.3)', color: '#ff6b6b', padding: '4px 12px', borderRadius: '6px', fontSize: '12px', cursor: 'pointer' }}>Đăng xuất</button>
+                  )}
+                </div>
+
+                {/* Form Fields */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div>
+                    <label style={labelStyle}>Application (Client) ID</label>
+                    <input style={inputStyle} type="text" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                      value={config.AZURE_CLIENT_ID || ''} onChange={e => setConfig(prev => ({ ...prev, AZURE_CLIENT_ID: e.target.value }))}
                       onFocus={e => e.target.style.borderColor = '#0078d4'} onBlur={e => e.target.style.borderColor = 'var(--border-color)'}
                     />
-                    <button onClick={() => setShowSecret(!showSecret)} style={{
-                      position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)',
-                      background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '12px', padding: '4px 8px'
-                    }}>{showSecret ? 'Ẩn' : 'Hiện'}</button>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Directory (Tenant) ID</label>
+                    <input style={inputStyle} type="text" placeholder="common (mặc định)"
+                      value={config.AZURE_TENANT_ID || ''} onChange={e => setConfig(prev => ({ ...prev, AZURE_TENANT_ID: e.target.value }))}
+                      onFocus={e => e.target.style.borderColor = '#0078d4'} onBlur={e => e.target.style.borderColor = 'var(--border-color)'}
+                    />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>
+                      Client Secret 
+                      {config.AZURE_CLIENT_SECRET_SET && <span style={{ color: '#4ecdc4', fontWeight: '400', marginLeft: '8px' }}>✓ Đã lưu</span>}
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <input style={{ ...inputStyle, paddingRight: '60px' }}
+                        type={showSecret ? 'text' : 'password'}
+                        placeholder={config.AZURE_CLIENT_SECRET_SET ? '••••••••• (nhập mới để thay đổi)' : 'Nhập Client Secret'}
+                        value={config.AZURE_CLIENT_SECRET || ''} onChange={e => setConfig(prev => ({ ...prev, AZURE_CLIENT_SECRET: e.target.value }))}
+                        onFocus={e => e.target.style.borderColor = '#0078d4'} onBlur={e => e.target.style.borderColor = 'var(--border-color)'}
+                      />
+                      <button onClick={() => setShowSecret(!showSecret)} style={{
+                        position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)',
+                        background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '12px', padding: '4px 8px'
+                      }}>{showSecret ? 'Ẩn' : 'Hiện'}</button>
+                    </div>
                   </div>
                 </div>
               </div>

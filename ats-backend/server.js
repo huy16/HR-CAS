@@ -286,6 +286,7 @@ const savedConfig = loadConfig();
 if (savedConfig.AZURE_CLIENT_ID) process.env.AZURE_CLIENT_ID = savedConfig.AZURE_CLIENT_ID;
 if (savedConfig.AZURE_TENANT_ID) process.env.AZURE_TENANT_ID = savedConfig.AZURE_TENANT_ID;
 if (savedConfig.AZURE_CLIENT_SECRET) process.env.AZURE_CLIENT_SECRET = savedConfig.AZURE_CLIENT_SECRET;
+if (savedConfig.DATABASE_URL) process.env.DATABASE_URL = savedConfig.DATABASE_URL;
 
 app.get('/api/config', (req, res) => {
     const config = loadConfig();
@@ -293,22 +294,37 @@ app.get('/api/config', (req, res) => {
         AZURE_CLIENT_ID: config.AZURE_CLIENT_ID || process.env.AZURE_CLIENT_ID || '',
         AZURE_TENANT_ID: config.AZURE_TENANT_ID || process.env.AZURE_TENANT_ID || 'common',
         AZURE_CLIENT_SECRET_SET: !!(config.AZURE_CLIENT_SECRET || process.env.AZURE_CLIENT_SECRET),
+        DATABASE_URL_SET: !!(config.DATABASE_URL || process.env.DATABASE_URL),
         AUTO_SCAN: config.AUTO_SCAN || process.env.AUTO_SCAN || 'false',
         configured: isConfigured()
     });
 });
 
-app.post('/api/config', (req, res) => {
-    const { AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_CLIENT_SECRET, AUTO_SCAN } = req.body;
+app.post('/api/config', async (req, res) => {
+    const { AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_CLIENT_SECRET, DATABASE_URL, AUTO_SCAN } = req.body;
     const config = loadConfig();
 
     if (AZURE_CLIENT_ID !== undefined) { config.AZURE_CLIENT_ID = AZURE_CLIENT_ID; process.env.AZURE_CLIENT_ID = AZURE_CLIENT_ID; }
     if (AZURE_TENANT_ID !== undefined) { config.AZURE_TENANT_ID = AZURE_TENANT_ID; process.env.AZURE_TENANT_ID = AZURE_TENANT_ID; }
     if (AZURE_CLIENT_SECRET !== undefined && AZURE_CLIENT_SECRET !== '') { config.AZURE_CLIENT_SECRET = AZURE_CLIENT_SECRET; process.env.AZURE_CLIENT_SECRET = AZURE_CLIENT_SECRET; }
+    
+    let dbChanged = false;
+    if (DATABASE_URL !== undefined && DATABASE_URL !== '') { 
+        config.DATABASE_URL = DATABASE_URL; 
+        process.env.DATABASE_URL = DATABASE_URL; 
+        dbChanged = true;
+    }
+    
     if (AUTO_SCAN !== undefined) { config.AUTO_SCAN = AUTO_SCAN; process.env.AUTO_SCAN = AUTO_SCAN; }
 
     saveConfig(config);
-    console.log('✅ Đã lưu cấu hình Azure mới.');
+    console.log('✅ Đã lưu cấu hình mới.');
+    
+    if (dbChanged) {
+        console.log('🔄 Đang chuyển đổi Database...');
+        await db.initDb();
+    }
+    
     res.json({ message: 'Đã lưu cấu hình thành công!', configured: isConfigured() });
 });
 

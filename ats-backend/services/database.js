@@ -8,12 +8,18 @@ const { Pool } = require('pg');
 const Database = require('better-sqlite3');
 const path = require('path');
 
-const isPostgres = !!process.env.DATABASE_URL;
+let isPostgres = false;
 
 let pgPool;
 let sqliteDb;
 
 async function initDb() {
+    isPostgres = !!process.env.DATABASE_URL;
+    
+    // Đóng db cũ nếu đang bật
+    if (pgPool) { pgPool.end(); pgPool = null; }
+    if (sqliteDb) { sqliteDb.close(); sqliteDb = null; }
+
     if (isPostgres) {
         pgPool = new Pool({
             connectionString: process.env.DATABASE_URL,
@@ -263,5 +269,5 @@ module.exports = {
     addScanHistory,
     getScanHistory,
     closeDb,
-    isPostgres
+    get isPostgres() { return isPostgres; }
 };
