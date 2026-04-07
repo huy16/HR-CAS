@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { Briefcase, LayoutDashboard, Settings, UserPlus, Users, Search, Bell, Upload, RefreshCw, Mic, ClipboardCheck, Mail, LogIn, CheckCircle, Loader } from 'lucide-react';
+import { Briefcase, LayoutDashboard, Settings, UserPlus, Users, Search, Bell, Upload, RefreshCw, Mic, ClipboardCheck, Mail, LogIn, CheckCircle, Loader, ChevronLeft, ChevronRight } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { mockCandidates, columns, masterData } from './data';
 import './App.css';
@@ -13,6 +13,7 @@ function App() {
   const [outlookStatus, setOutlookStatus] = useState({ configured: false, authenticated: false, account: null });
   const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState(null);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // Load dữ liệu từ SQLite khi mở trang
   useEffect(() => {
@@ -228,35 +229,38 @@ function App() {
   return (
     <div className="app-layout">
       {/* Sidebar Navigation */}
-      <aside className="sidebar">
+      <aside className={`sidebar ${isSidebarCollapsed ? 'collapsed' : ''}`}>
         <div className="sidebar-logo">
           <img src="/logo.png" alt="Logo" style={{ height: '32px', objectFit: 'contain', filter: 'drop-shadow(0 0 8px var(--primary-glow))' }} />
           <span>HR</span>
         </div>
+        <div className="sidebar-toggle-btn" onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}>
+          {isSidebarCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+        </div>
         <nav className="nav-menu" style={{ paddingTop: '12px' }}>
           <a href="#" className={`nav-item ${activeTab === 'board' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); setActiveTab('board'); }}>
             <LayoutDashboard className="icon" size={20} />
-            Dashboard
+            <span className="nav-text">Dashboard</span>
           </a>
           <a href="#" className={`nav-item ${activeTab === 'cv_main' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); setActiveTab('cv_main'); }}>
             <Users className="icon" size={20} />
-            Candidates
+            <span className="nav-text">Candidates</span>
           </a>
           <a href="#" className={`nav-item ${activeTab === 'interview' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); setActiveTab('interview'); }}>
             <Mic className="icon" size={20} />
-            Interview
+            <span className="nav-text">Interview</span>
           </a>
           <a href="#" className={`nav-item ${activeTab === 'onboard' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); setActiveTab('onboard'); }}>
             <ClipboardCheck className="icon" size={20} />
-            Onboard
+            <span className="nav-text">Onboard</span>
           </a>
           <a href="#" className={`nav-item ${activeTab === 'jobs' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); setActiveTab('jobs'); }}>
             <Briefcase className="icon" size={20} />
-            Job Management
+            <span className="nav-text">Job Management</span>
           </a>
           <a href="#" className={`nav-item ${activeTab === 'data_master' ? 'active' : ''}`} onClick={(e) => { e.preventDefault(); setActiveTab('data_master'); }}>
             <Settings className="icon" size={20} />
-            Settings
+            <span className="nav-text">Settings</span>
           </a>
         </nav>
       </aside>
