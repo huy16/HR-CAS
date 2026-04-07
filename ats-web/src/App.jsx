@@ -392,8 +392,8 @@ function App() {
                                   <div className="card-title">{cand.name}</div>
                                   <div className="card-subtitle">{cand.position}</div>
                                   <div className="card-tags">
-                                    <span className={`tag ${cand.source.includes('Mail') ? 'source-mail' : ''}`}>
-                                      {cand.source}
+                                    <span className={`tag ${(cand.source || '').includes('Mail') ? 'source-mail' : ''}`}>
+                                      {cand.source || 'Không rõ'}
                                     </span>
                                     <span className="tag">
                                       {cand.appliedDate}
