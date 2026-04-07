@@ -365,9 +365,11 @@ const frontendBuild = path.join(__dirname, '..', 'ats-web', 'dist');
 if (fs.existsSync(frontendBuild)) {
     app.use(express.static(frontendBuild));
     // SPA fallback - tất cả route không phải API → trả về index.html
-    app.get('/(.*)', (req, res) => {
+    app.use((req, res, next) => {
         if (!req.path.startsWith('/api') && !req.path.startsWith('/auth') && !req.path.startsWith('/attachments')) {
             res.sendFile(path.join(frontendBuild, 'index.html'));
+        } else {
+            next();
         }
     });
     console.log('🌐 Frontend: Serving từ ats-web/dist/');
