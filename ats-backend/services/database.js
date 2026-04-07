@@ -25,6 +25,9 @@ async function initDb() {
     if (sqliteDb) { sqliteDb.close(); sqliteDb = null; }
 
     if (isPostgres) {
+        // Log để debug (đã che mật khẩu)
+        console.log('📡 Đang kết nối Database:', connectionUri.replace(/:[^:@/]+@/, ':****@'));
+
         pgPool = new Pool({
             connectionString: connectionUri,
             ssl: { rejectUnauthorized: false } // Bắt buộc cho Render Postgres
