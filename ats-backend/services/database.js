@@ -17,8 +17,8 @@ let pgPool;
 let sqliteDb;
 
 async function initDb() {
-    const connectionUri = SUPABASE_URL !== '' && !SUPABASE_URL.includes('[YOUR-PASSWORD]') ? SUPABASE_URL : process.env.DATABASE_URL;
-    isPostgres = !!connectionUri;
+    const connectionUri = (process.env.DATABASE_URL || SUPABASE_URL || '').trim();
+    isPostgres = !!connectionUri && !connectionUri.includes('[YOUR-PASSWORD]');
     
     // Đóng db cũ nếu đang bật
     if (pgPool) { pgPool.end(); pgPool = null; }
