@@ -4,6 +4,10 @@ const fs = require('fs');
 const path = require('path');
 const cron = require('node-cron');
 require('dotenv').config();
+const dns = require('dns');
+if (dns.setDefaultResultOrder) {
+    dns.setDefaultResultOrder('ipv4first');
+}
 
 // Import services & routes
 const { router: authRouter, getAccessToken, isConfigured } = require('./routes/auth');
