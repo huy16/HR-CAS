@@ -5,7 +5,7 @@ import * as XLSX from 'xlsx';
 import { mockCandidates, columns, masterData } from './data';
 import './App.css';
 
-const API_URL = 'http://localhost:3001';
+const API_URL = import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:3001' : '');
 
 function App() {
   const [candidates, setCandidates] = useState(mockCandidates);

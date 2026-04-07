@@ -383,10 +383,10 @@ const PORT = process.env.PORT || 3001;
 async function start() {
     await db.initDb();
     
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
         console.log('');
         console.log('═══════════════════════════════════════════════════');
-        console.log(`🚀 ATS Backend Server đang chạy tại http://localhost:${PORT}`);
+        console.log(`🚀 ATS Backend Server đang chạy tại http://0.0.0.0:${PORT}`);
         console.log(`💾 Database: ${db.isPostgres ? 'PostgreSQL (Render)' : 'SQLite (Local)'}`);
         console.log('═══════════════════════════════════════════════════');
         console.log('');
