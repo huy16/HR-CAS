@@ -2,7 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
-require('dotenv').config();
+const ViteExpress = require('vite-express');
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 const dns = require('dns');
 
 if (dns.setDefaultResultOrder) {
@@ -139,21 +140,41 @@ app.post('/api/crawler/run/:platform', async (req, res) => {
             });
         }
 
-        console.log(`🚀 Bắt đầu cào dữ liệu từ: ${platform.toUpperCase()}...`);
+        console.log(`🚀 Bắt đầu cào dữ liệu từ: ${platform.toUpperCase()} với kỳ hạn: ${req.body.period || '1d'}...`);
         let newCandidates = [];
 
         if (platform === 'careerlink') {
-            newCandidates = await crawlerService.crawlCareerLink(creds.email, creds.password);
+            newCandidates = await crawlerService.crawlCareerLink(creds.email, creds.password, req.body.period || '1d');
         } else {
             return res.status(404).json({ error: 'Nền tảng không hỗ trợ' });
         }
 
-        // Loại trùng
+        // 1. Phân tích & Gộp dữ liệu (Gộp nếu trùng Tên + SĐT/Email để tránh đẻ thêm dòng)
+        const BLACKLIST = ['0400539269', 'hr@cas-energy.com', 'contact@careerlink.vn'];
         const uniqueCandidates = [];
+        
         for (const c of newCandidates) {
-            const exists = (c.phone && await db.candidateExistsByPhone(c.phone)) || 
-                           (c.email && await db.candidateExistsByEmail(c.email));
-            if (!exists) uniqueCandidates.push(c);
+            const cleanPhone = c.phone?.replace(/[\s.-]/g, '') || '';
+            const isBlacklistedPhone = cleanPhone && BLACKLIST.some(b => cleanPhone.includes(b.replace(/[\s.-]/g, '')));
+            const isBlacklistedEmail = c.email && BLACKLIST.some(b => c.email.toLowerCase().includes(b.toLowerCase()));
+
+            const checkPhone = !isBlacklistedPhone && cleanPhone !== '';
+            const checkEmail = !isBlacklistedEmail && c.email && c.email !== '';
+
+            // Tìm xem người này đã tồn tại trong hệ thống chưa (theo SĐT hoặc Email)
+            let existingId = null;
+            if (checkPhone) existingId = await db.findCandidateIdByPhone(c.phone);
+            if (!existingId && checkEmail) existingId = await db.findCandidateIdByEmail(c.email);
+
+            if (existingId) {
+                // Nếu ĐÃ CÓ: Ta dùng tiếp ID cũ để lệnh INSERT INTO ... ON CONFLICT(id) DO UPDATE sẽ cập nhật thông tin mới nhất vào dòng đó
+                c.id = existingId;
+            } else {
+                // Nếu CHƯA CÓ: Tạo ID mới hoàn toàn
+                if (!c.id) c.id = 'cl_' + Math.random().toString(36).substring(2, 9);
+            }
+            
+            uniqueCandidates.push(c);
         }
 
         const added = await db.insertManyCandidates(uniqueCandidates);
@@ -249,24 +270,16 @@ app.delete('/api/jobs/:id', async (req, res) => {
 });
 
 // ============================================================
-// Serve Frontend & Start
+// Integration & Start
 // ============================================================
-const frontendBuild = path.join(__dirname, '..', 'ats-web', 'dist');
-if (fs.existsSync(frontendBuild)) {
-    app.use(express.static(frontendBuild));
-    app.get('{*path}', (req, res) => {
-        if (!req.path.startsWith('/api') && !req.path.startsWith('/attachments')) {
-            res.sendFile(path.join(frontendBuild, 'index.html'));
-        }
-    });
-}
-
 const PORT = process.env.PORT || 3001;
+
 async function start() {
     await db.initDb();
-    app.listen(PORT, '0.0.0.0', () => {
+    
+    ViteExpress.listen(app, PORT, () => {
         console.log('\n═══════════════════════════════════════════════════');
-        console.log(`🚀 ATS Backend: http://localhost:${PORT}`);
+        console.log(`🚀 ATS Unified System: http://localhost:${PORT}`);
         console.log(`💾 Database: ${db.isPostgres ? 'PostgreSQL' : 'SQLite'}`);
         console.log('═══════════════════════════════════════════════════\n');
     });

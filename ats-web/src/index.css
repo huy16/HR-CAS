@@ -1,34 +1,42 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
 
 :root {
-  /* Color Palette - Premium Dark Theme with Orange Accent */
-  --bg-app: #0B0E14; /* Deep, rich space gray */
-  --bg-surface: #151A23;
-  --bg-surface-elevated: #1F2633;
-  --bg-surface-hover: #2A3441;
+  /* Color Palette - Sovereign Intel Premium Dark Theme */
+  --bg-app: #070B14; /* Deep, midnight void */
+  --bg-surface: #0E1320;
+  --bg-surface-elevated: #161C2C;
+  --bg-surface-hover: #1E263A;
   
-  --primary: #F0941C; /* Orange from Logo */
+  --primary: #F0941C; /* Signature Command Orange */
   --primary-hover: #F2A63B;
-  --primary-glow: rgba(240, 148, 28, 0.3);
+  --primary-glow: rgba(240, 148, 28, 0.25);
+  --accent-blue: #3B82F6;
+  --accent-purple: #8B5CF6;
+  --accent-green: #10B981;
   
-  --success: #10b981;
-  --success-glow: rgba(16, 185, 129, 0.2);
-  --warning: #f59e0b;
-  --danger: #ef4444;
-  --info: #3b82f6;
+  --success: #10B981;
+  --success-glow: rgba(16, 185, 129, 0.15);
+  --warning: #F59E0B;
+  --danger: #EF4444;
+  --info: #3B82F6;
 
-  --text-main: #f8fafc;
-  --text-secondary: #cbd5e1;
-  --text-muted: #64748b;
+  --status-screening: #F59E0B;
+  --status-interview: #8B5CF6;
+  --status-offer: #F59E0B;
+  --status-onboard: #10B981;
+
+  --text-main: #F1F5F9;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
   
-  --border-color: rgba(255, 255, 255, 0.08);
-  --glass-bg: rgba(21, 26, 35, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.12);
-  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.35);
+  --border-color: rgba(255, 255, 255, 0.05);
+  --glass-bg: rgba(14, 19, 32, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --shadow-glass: 0 12px 40px -12px rgba(0, 0, 0, 0.6);
 
   /* Typography */
-  --font-sans: 'Inter', system-ui, sans-serif;
-  --font-display: 'Outfit', system-ui, sans-serif;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Outfit', 'Inter', system-ui, sans-serif;
 }
 
 * {
@@ -67,8 +75,8 @@ body {
 /* Glassmorphism utilities */
 .glass-panel {
   background: var(--glass-bg);
-  backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   border: 1px solid var(--glass-border);
   box-shadow: var(--shadow-glass);
 }

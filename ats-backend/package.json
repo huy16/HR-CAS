@@ -12,8 +12,6 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "@azure/msal-node": "^5.1.2",
-    "@microsoft/microsoft-graph-client": "^3.0.7",
     "better-sqlite3": "^12.8.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.1",
@@ -23,6 +21,10 @@
     "mailparser": "^3.9.6",
     "multer": "^2.1.1",
     "node-cron": "^4.2.1",
-    "pg": "^8.20.0"
+    "pdf-parse": "^2.4.5",
+    "pg": "^8.20.0",
+    "puppeteer": "^24.3.1",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
   }
 }

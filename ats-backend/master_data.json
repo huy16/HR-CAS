@@ -1,0 +1,64 @@
+{
+  "sources": [
+    "Mail HR",
+    "Joboko",
+    "Vietnamworks",
+    "Vieclam24h",
+    "LinkedIn",
+    "TopCV",
+    "Mail Info",
+    "JobsGo",
+    "UCTalent",
+    "Agri.job"
+  ],
+  "positions": [
+    "Tự động hóa - Kỹ sư",
+    "Tự động hóa - TTS",
+    "Hệ thống điện - TTS",
+    "Hệ thống điện - Kỹ sư",
+    "Vận hành Solar - Kỹ sư",
+    "Cơ Điện - KTV Cơ khí NN",
+    "Cơ Điện - TTS",
+    "Marketing",
+    "Fullstack Dev",
+    "KS Nông nghiệp (Ninh Thuận)",
+    "KS Nông nghiệp (Đà Nẵng)",
+    "Nông sản - KD Phát triển TT",
+    "Nông sản - TTS Kinh doanh",
+    "Nông sản - Vận hành cung ứng",
+    "Thương mại Vật tư",
+    "Môi trường - Kỹ sư",
+    "HCNS - TTS",
+    "Mua hàng dự án (Điện/ Solar)",
+    "Kế toán vật tư - dự án",
+    "TTS kế toán",
+    "TTS MKT",
+    "TTS O&M Solar"
+  ],
+  "hrPersons": [
+    "Ms. Linh",
+    "Ms. Thảo",
+    "Ms. Lai",
+    "Mr. Đức Anh",
+    "Huy"
+  ],
+  "scrStatus": [
+    "CV not accept",
+    "Screening",
+    "Pending"
+  ],
+  "scrResult": [
+    "Interview",
+    "Fail",
+    "Pending"
+  ],
+  "intResult": [
+    "Pass",
+    "Fail",
+    "Pending"
+  ],
+  "offResult": [
+    "Xác nhận",
+    "Từ chối"
+  ]
+}

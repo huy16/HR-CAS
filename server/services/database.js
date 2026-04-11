@@ -264,6 +264,30 @@ async function candidateExistsByEmail(email) {
     }
 }
 
+async function findCandidateIdByPhone(phone) {
+    if (!phone) return null;
+    const cleanPhone = phone.replace(/[\s\.\-]/g, '');
+    if (isPostgres) {
+        const res = await pgPool.query('SELECT id FROM candidates WHERE REPLACE(REPLACE(REPLACE(phone, \' \', \'\'), \'.\', \'\'), \'-\', \'\') = $1 LIMIT 1', [cleanPhone]);
+        return res.rows[0]?.id;
+    } else {
+        const row = sqliteDb.prepare("SELECT id FROM candidates WHERE REPLACE(REPLACE(REPLACE(phone, ' ', ''), '.', ''), '-', '') = ? LIMIT 1").get(cleanPhone);
+        return row?.id;
+    }
+}
+
+async function findCandidateIdByEmail(email) {
+    if (!email) return null;
+    const lowerEmail = email.toLowerCase().trim();
+    if (isPostgres) {
+        const res = await pgPool.query('SELECT id FROM candidates WHERE LOWER(TRIM(email)) = $1 LIMIT 1', [lowerEmail]);
+        return res.rows[0]?.id;
+    } else {
+        const row = sqliteDb.prepare('SELECT id FROM candidates WHERE LOWER(TRIM(email)) = ? LIMIT 1').get(lowerEmail);
+        return row?.id;
+    }
+}
+
 async function updateCandidate(id, fields) {
     const allowed = [
         'name', 'phone', 'email', 'position', 'source', 'status',
@@ -429,6 +453,8 @@ module.exports = {
     candidateExistsByOutlookMsgId,
     candidateExistsByPhone,
     candidateExistsByEmail,
+    findCandidateIdByPhone,
+    findCandidateIdByEmail,
     addScanHistory,
     getScanHistory,
     getAllJobs,
