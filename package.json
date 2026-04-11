@@ -4,9 +4,9 @@
   "main": "server/server.js",
   "type": "commonjs",
   "scripts": {
-    "dev": "node server/server.js",
-    "build": "vite build",
-    "start": "NODE_ENV=production node server/server.js"
+    "dev": "node ats-backend/server.js",
+    "build": "bash render-build.sh",
+    "start": "node ats-backend/server.js"
   },
   "engines": {
     "node": ">=18.0.0"
